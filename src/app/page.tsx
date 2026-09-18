@@ -1,50 +1,15 @@
-import fs from "fs";
-import path from "path";
-
-type CustomerRow = Record<string, string>;
-
-function loadCustomers(): CustomerRow[] {
-  const csvPath = path.join(process.cwd(), "data", "helix_customers.csv");
-  const csv = fs.readFileSync(csvPath, "utf-8").trim();
-  const [headerLine, ...lines] = csv.split("\n");
-  const headers = headerLine.split(",");
-  return lines.map((line) => {
-    const values = line.split(",");
-    return Object.fromEntries(
-      headers.map((header, i) => [header, values[i] ?? ""]),
-    );
-  });
-}
-
-function computeKpis(rows: CustomerRow[]) {
-  const totalCustomers = rows.length;
-
-  // Active MRR: sum of mrr for customers with status = Active.
-  // Churned/at-risk accounts are excluded so this reflects current run-rate revenue.
-  const activeMrr = rows
-    .filter((r) => r.status === "Active")
-    .reduce((sum, r) => sum + Number(r.mrr || 0), 0);
-
-  // Churn rate: share of all customers whose status is Churned.
-  const churnedCount = rows.filter((r) => r.status === "Churned").length;
-  const churnRate = (churnedCount / totalCustomers) * 100;
-
-  // Average NPS: mean of nps_score across all customers.
-  const npsValues = rows
-    .map((r) => Number(r.nps_score))
-    .filter((v) => !Number.isNaN(v));
-  const avgNps =
-    npsValues.reduce((sum, v) => sum + v, 0) / npsValues.length;
-
-  // Plan mix: customer count per plan, most popular first.
-  const planCounts = rows.reduce<Record<string, number>>((acc, r) => {
-    acc[r.plan] = (acc[r.plan] ?? 0) + 1;
-    return acc;
-  }, {});
-  const planMix = Object.entries(planCounts).sort((a, b) => b[1] - a[1]);
-
-  return { totalCustomers, activeMrr, churnRate, avgNps, planMix };
-}
+import {
+  computeCustomersByIndustry,
+  computeKpis,
+  computeMrrByPlan,
+  computeNewCustomersByMonth,
+  computeStatusBreakdown,
+  loadCustomers,
+} from "@/lib/customers";
+import { ChartCard } from "@/components/charts/ChartCard";
+import { BarChart } from "@/components/charts/BarChart";
+import { LineChart } from "@/components/charts/LineChart";
+import { DonutChart } from "@/components/charts/DonutChart";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -56,6 +21,10 @@ export default function Home() {
   const customers = loadCustomers();
   const { totalCustomers, activeMrr, churnRate, avgNps, planMix } =
     computeKpis(customers);
+  const mrrByPlan = computeMrrByPlan(customers);
+  const customersByIndustry = computeCustomersByIndustry(customers);
+  const newCustomersByMonth = computeNewCustomersByMonth(customers);
+  const statusBreakdown = computeStatusBreakdown(customers);
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10 sm:px-8">
@@ -121,6 +90,49 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard
+          title="New Customers by Month"
+          subtitle="Signups per month, Jan 2023 - Dec 2024"
+          className="lg:col-span-2"
+        >
+          <LineChart
+            data={newCustomersByMonth}
+            valueFormat="number"
+            xAxisLabel="Month"
+            yAxisLabel="New customers"
+          />
+        </ChartCard>
+
+        <ChartCard title="MRR by Plan" subtitle="Monthly recurring revenue per plan tier">
+          <BarChart
+            data={mrrByPlan}
+            orientation="vertical"
+            valueFormat="currency"
+            xAxisLabel="Plan"
+            yAxisLabel="MRR"
+          />
+        </ChartCard>
+
+        <ChartCard title="Customer Status" subtitle="Share of customers by account status">
+          <DonutChart data={statusBreakdown} centerLabel="Customers" />
+        </ChartCard>
+
+        <ChartCard
+          title="Customers by Industry"
+          subtitle="Customer count per industry, most first"
+          className="lg:col-span-2"
+        >
+          <BarChart
+            data={customersByIndustry}
+            orientation="horizontal"
+            valueFormat="number"
+            xAxisLabel="Industry"
+            yAxisLabel="Customers"
+          />
+        </ChartCard>
       </div>
     </main>
   );
