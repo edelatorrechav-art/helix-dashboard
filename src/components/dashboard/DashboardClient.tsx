@@ -39,6 +39,11 @@ export function DashboardClient({ customers }: { customers: CustomerRow[] }) {
   const [plan, setPlan] = useState("");
   const [industry, setIndustry] = useState("");
 
+  const exportColumns = useMemo(
+    () => (customers.length > 0 ? Object.keys(customers[0]) : []),
+    [customers],
+  );
+
   const statusOptions = useMemo(
     () => uniqueInOrder(customers.map((c) => c.status), STATUS_ORDER),
     [customers],
@@ -218,7 +223,11 @@ export function DashboardClient({ customers }: { customers: CustomerRow[] }) {
       </div>
 
       <div className="mt-10">
-        <CustomerTable rows={filtered} totalCount={customers.length} />
+        <CustomerTable
+          rows={filtered}
+          totalCount={customers.length}
+          exportColumns={exportColumns}
+        />
       </div>
     </>
   );

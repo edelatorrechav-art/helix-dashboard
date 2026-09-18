@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { CustomerRow } from "@/lib/customers";
+import { downloadCsv, rowsToCsv } from "@/lib/csv-export";
 
 type SortDirection = "asc" | "desc";
 
@@ -57,9 +58,11 @@ function StatusBadge({ status }: { status: string }) {
 export function CustomerTable({
   rows,
   totalCount,
+  exportColumns,
 }: {
   rows: CustomerRow[];
   totalCount: number;
+  exportColumns: string[];
 }) {
   const [sortKey, setSortKey] = useState<string>("mrr");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
@@ -87,12 +90,46 @@ export function CustomerTable({
     }
   }
 
+  function handleExport() {
+    const csv = rowsToCsv(sortedRows, exportColumns);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(`helix-customers-${date}.csv`, csv);
+  }
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900">Customer Directory</h2>
-      <p className="mt-0.5 text-xs text-slate-500">
-        {rows.length} of {totalCount} customers — click a column to sort
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">Customer Directory</h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            {rows.length} of {totalCount} customers — click a column to sort
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={sortedRows.length === 0}
+          className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-300"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M8 1.5v8.25m0 0L4.75 6.5M8 9.75l3.25-3.25M2.5 11.5v1.75c0 .69.56 1.25 1.25 1.25h8.5c.69 0 1.25-.56 1.25-1.25V11.5"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Export CSV
+        </button>
+      </div>
 
       <div className="mt-4 max-h-[480px] overflow-auto rounded-md border border-slate-100">
         <table className="w-full min-w-[720px] border-collapse text-sm">
