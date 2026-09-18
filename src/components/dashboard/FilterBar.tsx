@@ -100,7 +100,7 @@ export function FilterBar({
           <button
             type="button"
             onClick={onReset}
-            className="rounded-md px-2 py-1.5 text-xs font-medium text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline"
+            className="rounded-md px-2 py-1.5 text-xs font-medium text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
           >
             Reset filters
           </button>

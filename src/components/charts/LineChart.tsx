@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { formatByType, niceScale, type ValueFormat } from "@/lib/chart-scale";
+import { useElementWidth } from "@/lib/use-element-width";
 import { ChartTooltip, TooltipLabel, TooltipValue } from "./ChartTooltip";
 import { EmptyChartState } from "./EmptyChartState";
 
@@ -35,14 +36,19 @@ export function LineChart({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
+  const [containerRef, measuredWidth] = useElementWidth<HTMLDivElement>(900);
   const valueFormatter = (value: number) => formatByType(value, valueFormat);
 
   if (data.length === 0) {
-    return <EmptyChartState />;
+    return (
+      <div ref={containerRef}>
+        <EmptyChartState />
+      </div>
+    );
   }
 
-  const width = 900;
-  const height = 280;
+  const width = Math.max(measuredWidth, 240);
+  const height = Math.max(width * (280 / 900), 160);
   const margin = { top: 16, right: 16, bottom: 32, left: 52 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
@@ -54,6 +60,12 @@ export function LineChart({
     margin.left + (i / Math.max(data.length - 1, 1)) * plotWidth;
   const yFor = (v: number) =>
     margin.top + plotHeight - (v / scale.max) * plotHeight;
+
+  // Adaptive tick density: fit as many month labels as comfortably space
+  // out at ~70px apart, so labels thin out on a narrow mobile card instead
+  // of overlapping.
+  const maxLabels = Math.max(2, Math.floor(plotWidth / 70));
+  const labelStride = Math.max(1, Math.ceil(data.length / maxLabels));
 
   const linePath = data
     .map((d, i) => `${i === 0 ? "M" : "L"}${xFor(i)},${yFor(d.value)}`)
@@ -81,7 +93,7 @@ export function LineChart({
   const hoveredY = hoveredIndex !== null ? yFor(data[hoveredIndex].value) : 0;
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
@@ -120,7 +132,7 @@ export function LineChart({
         />
 
         {data.map((d, i) =>
-          i % 3 === 0 ? (
+          i % labelStride === 0 ? (
             <text
               key={d.month}
               x={xFor(i)}

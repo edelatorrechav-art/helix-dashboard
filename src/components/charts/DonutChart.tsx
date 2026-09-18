@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ChartTooltip, TooltipLabel, TooltipValue } from "./ChartTooltip";
 import { EmptyChartState } from "./EmptyChartState";
 
@@ -25,7 +25,6 @@ export function DonutChart({
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const svgRef = useRef<SVGSVGElement>(null);
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
@@ -61,7 +60,6 @@ export function DonutChart({
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-center">
       <div className="relative shrink-0">
         <svg
-          ref={svgRef}
           viewBox={`0 0 ${size} ${size}`}
           width={size}
           height={size}

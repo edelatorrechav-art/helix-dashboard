@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatByType, niceScale, type ValueFormat } from "@/lib/chart-scale";
+import { useElementWidth } from "@/lib/use-element-width";
 import { ChartTooltip, TooltipLabel, TooltipValue } from "./ChartTooltip";
 import { EmptyChartState } from "./EmptyChartState";
 
@@ -48,18 +49,25 @@ export function BarChart({
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [containerRef, measuredWidth] = useElementWidth<HTMLDivElement>(
+    orientation === "vertical" ? 560 : 600,
+  );
   const valueFormatter = (value: number) => formatByType(value, valueFormat);
 
   if (data.length === 0) {
-    return <EmptyChartState />;
+    return (
+      <div ref={containerRef}>
+        <EmptyChartState />
+      </div>
+    );
   }
 
   const maxValue = Math.max(...data.map((d) => d.value), 0);
   const scale = niceScale(maxValue, 4);
+  const width = Math.max(measuredWidth, 200);
 
   if (orientation === "vertical") {
-    const width = 560;
-    const height = 300;
+    const height = Math.max(width * (300 / 560), 180);
     const margin = { top: 16, right: 16, bottom: 44, left: 68 };
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
@@ -70,7 +78,7 @@ export function BarChart({
       margin.top + plotHeight - (v / scale.max) * plotHeight;
 
     return (
-      <div className="relative">
+      <div className="relative" ref={containerRef}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full"
@@ -177,7 +185,6 @@ export function BarChart({
   }
 
   // Horizontal orientation
-  const width = 600;
   const rowHeight = 26;
   const margin = { top: 8, right: 56, bottom: 32, left: 132 };
   const plotWidth = width - margin.left - margin.right;
@@ -188,7 +195,7 @@ export function BarChart({
   const xFor = (v: number) => (v / scale.max) * plotWidth;
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"

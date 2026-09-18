@@ -110,7 +110,7 @@ export function CustomerTable({
           type="button"
           onClick={handleExport}
           disabled={sortedRows.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           <svg
             width="14"
@@ -148,7 +148,7 @@ export function CustomerTable({
                     <button
                       type="button"
                       onClick={() => handleSort(column)}
-                      className={`inline-flex items-center gap-1 hover:text-slate-900 ${
+                      className={`inline-flex items-center gap-1 rounded hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 ${
                         isActive ? "text-slate-900" : ""
                       }`}
                     >
