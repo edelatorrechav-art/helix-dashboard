@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatByType, niceScale, type ValueFormat } from "@/lib/chart-scale";
 import { ChartTooltip, TooltipLabel, TooltipValue } from "./ChartTooltip";
+import { EmptyChartState } from "./EmptyChartState";
 
 type BarDatum = { label: string; value: number };
 
@@ -48,6 +49,10 @@ export function BarChart({
   const [hovered, setHovered] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const valueFormatter = (value: number) => formatByType(value, valueFormat);
+
+  if (data.length === 0) {
+    return <EmptyChartState />;
+  }
 
   const maxValue = Math.max(...data.map((d) => d.value), 0);
   const scale = niceScale(maxValue, 4);

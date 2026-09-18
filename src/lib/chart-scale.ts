@@ -30,19 +30,34 @@ export function niceScale(max: number, maxTicks = 4) {
   return { max: niceMax, step, ticks };
 }
 
+// A hand-rolled compact formatter, not Intl's `notation: "compact"` - that
+// option's rounding/trailing-zero behavior has been observed to differ
+// between Node's and the browser's bundled ICU data (e.g. "$50K" vs
+// "$50.0K" for the same value), which breaks SSR hydration. Plain math
+// here is deterministic across runtimes.
+function compactParts(value: number): { rounded: string; suffix: string } {
+  const abs = Math.abs(value);
+  const [divisor, suffix] =
+    abs >= 1_000_000_000
+      ? [1_000_000_000, "B"]
+      : abs >= 1_000_000
+        ? [1_000_000, "M"]
+        : abs >= 1_000
+          ? [1_000, "K"]
+          : [1, ""];
+  const divided = value / divisor;
+  const fixed = suffix ? divided.toFixed(1) : String(Math.round(divided));
+  return { rounded: fixed.replace(/\.0$/, ""), suffix };
+}
+
 export function formatCompactNumber(value: number): string {
-  return new Intl.NumberFormat("en-US", { notation: "compact" }).format(
-    value,
-  );
+  const { rounded, suffix } = compactParts(value);
+  return `${rounded}${suffix}`;
 }
 
 export function formatCompactCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value);
+  const { rounded, suffix } = compactParts(value);
+  return `$${rounded}${suffix}`;
 }
 
 export type ValueFormat = "currency" | "number";

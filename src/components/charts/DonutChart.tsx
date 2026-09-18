@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ChartTooltip, TooltipLabel, TooltipValue } from "./ChartTooltip";
+import { EmptyChartState } from "./EmptyChartState";
 
 type DonutDatum = { label: string; value: number };
 
@@ -27,6 +28,11 @@ export function DonutChart({
   const svgRef = useRef<SVGSVGElement>(null);
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
+
+  if (data.length === 0 || total === 0) {
+    return <EmptyChartState />;
+  }
+
   const size = 220;
   const center = size / 2;
   const radius = 78;

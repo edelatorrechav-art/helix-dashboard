@@ -1,20 +1,4 @@
-import fs from "fs";
-import path from "path";
-
 export type CustomerRow = Record<string, string>;
-
-export function loadCustomers(): CustomerRow[] {
-  const csvPath = path.join(process.cwd(), "data", "helix_customers.csv");
-  const csv = fs.readFileSync(csvPath, "utf-8").trim();
-  const [headerLine, ...lines] = csv.split("\n");
-  const headers = headerLine.split(",");
-  return lines.map((line) => {
-    const values = line.split(",");
-    return Object.fromEntries(
-      headers.map((header, i) => [header, values[i] ?? ""]),
-    );
-  });
-}
 
 export function computeKpis(rows: CustomerRow[]) {
   const totalCustomers = rows.length;
@@ -27,14 +11,16 @@ export function computeKpis(rows: CustomerRow[]) {
 
   // Churn rate: share of all customers whose status is Churned.
   const churnedCount = rows.filter((r) => r.status === "Churned").length;
-  const churnRate = (churnedCount / totalCustomers) * 100;
+  const churnRate = totalCustomers === 0 ? 0 : (churnedCount / totalCustomers) * 100;
 
   // Average NPS: mean of nps_score across all customers.
   const npsValues = rows
     .map((r) => Number(r.nps_score))
     .filter((v) => !Number.isNaN(v));
   const avgNps =
-    npsValues.reduce((sum, v) => sum + v, 0) / npsValues.length;
+    npsValues.length === 0
+      ? 0
+      : npsValues.reduce((sum, v) => sum + v, 0) / npsValues.length;
 
   // Plan mix: customer count per plan, most popular first.
   const planCounts = rows.reduce<Record<string, number>>((acc, r) => {
@@ -85,14 +71,18 @@ export function computeNewCustomersByMonth(rows: CustomerRow[]) {
     .map(([month, value]) => ({ month, value }));
 }
 
+const STATUS_ORDER = ["Active", "At-Risk", "Churned"];
+
 // Customer status breakdown for the donut chart.
 export function computeStatusBreakdown(rows: CustomerRow[]) {
   const counts = rows.reduce<Record<string, number>>((acc, r) => {
     acc[r.status] = (acc[r.status] ?? 0) + 1;
     return acc;
   }, {});
-  const order = ["Active", "At-Risk", "Churned"];
-  return order
-    .filter((status) => status in counts)
-    .map((status) => ({ label: status, value: counts[status] }));
+  return STATUS_ORDER.filter((status) => status in counts).map((status) => ({
+    label: status,
+    value: counts[status],
+  }));
 }
+
+export { STATUS_ORDER, PLAN_TIER_ORDER };

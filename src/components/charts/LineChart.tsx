@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { formatByType, niceScale, type ValueFormat } from "@/lib/chart-scale";
 import { ChartTooltip, TooltipLabel, TooltipValue } from "./ChartTooltip";
+import { EmptyChartState } from "./EmptyChartState";
 
 type LinePoint = { month: string; value: number };
 
@@ -35,6 +36,10 @@ export function LineChart({
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
   const valueFormatter = (value: number) => formatByType(value, valueFormat);
+
+  if (data.length === 0) {
+    return <EmptyChartState />;
+  }
 
   const width = 900;
   const height = 280;
